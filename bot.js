@@ -1,3 +1,4 @@
+const punycode = require('punycode/');
 const express = require('express');
 const bodyParser = require('body-parser');
 const { Telegraf } = require('telegraf');
