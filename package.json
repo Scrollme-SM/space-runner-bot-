@@ -1,0 +1,14 @@
+{
+    "name": "space-runner-bot",
+    "version": "1.0.0",
+    "description": "Telegram bot for Space Runner game",
+    "main": "bot.js",
+    "scripts": {
+        "start": "node bot.js"
+    },
+    "dependencies": {
+        "express": "^4.17.1",
+        "telegraf": "^4.3.0",
+        "body-parser": "^1.19.0"
+    }
+}
