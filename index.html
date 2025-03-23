@@ -159,19 +159,22 @@
 
         // Telegram Integration
         function initTelegram() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                const tg = window.Telegram.WebApp;
-                tg.expand();
-                userId = tg.initDataUnsafe.user ? tg.initDataUnsafe.user.id : 'test_user_' + Math.random();
-                fetch('https://your-bot-api-url/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ userId: userId, username: tg.initDataUnsafe.user ? tg.initDataUnsafe.user.username : 'Anonymous' })
-                }).catch(err => console.error('Error registering user:', err));
-            } else {
-                userId = 'test_user_' + Math.random();
-            }
-        }
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+    if (userId) {
+        fetch('https://space-runner-bot.onrender.com/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId.toString() })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('User registered:', userId);
+                }
+            })
+            .catch(error => console.error('Error registering user:', error));
+    }
+}
 
         // Keyboard Controls (for Desktop)
         window.addEventListener('keydown', (e) => {
@@ -390,9 +393,26 @@
 
         // End Game
         function endGame() {
-            document.getElementById('finalScore').textContent = score;
-            document.getElementById('finalCoins').textContent = coins;
-            document.getElementById('gameOverScreen').style.display = 'block';
+    const userId = window.Telegram.WebApp.initDataUnsafe.user?.id;
+    if (userId) {
+        fetch('https://space-runner-bot.onrender.com/update-coins', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId.toString(), coins: coins })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`Added ${data.coinsAdded} coins for user ${userId}`);
+                }
+            })
+            .catch(error => console.error('Error updating coins:', error));
+    }
+    // Display game over screen
+    document.getElementById('score').innerText = `Score: ${score}`;
+    document.getElementById('coins-earned').innerText = `Coins Earned: ${coins}`;
+    document.getElementById('game-over').style.display = 'block';
+}
 
             // Send coins to Telegram bot
             fetch('https://your-bot-api-url/update-coins', {
@@ -421,22 +441,27 @@
 
         // Show Leaderboard
         function showLeaderboard() {
-            document.getElementById('gameOverScreen').style.display = 'none';
-            document.getElementById('leaderboardScreen').style.display = 'block';
-            fetch('https://your-bot-api-url/leaderboard')
-                .then(response => response.json())
-                .then(data => {
-                    let content = 'Top 100 Players:\n';
-                    data.forEach((player, index) => {
-                        content += `${index + 1}. ${player.username}: ${player.coins} coins, ${player.referrals} referrals\n`;
-                    });
-                    document.getElementById('leaderboardContent').textContent = content;
-                })
-                .catch(err => {
-                    console.error('Error fetching leaderboard:', err);
-                    document.getElementById('leaderboardContent').textContent = 'Error loading leaderboard.';
+    fetch('https://space-runner-bot.onrender.com/leaderboard')
+        .then(response => response.json())
+        .then(data => {
+            // Display leaderboard data
+            const leaderboardDiv = document.getElementById('leaderboard');
+            leaderboardDiv.innerHTML = '';
+            if (data.length === 0) {
+                leaderboardDiv.innerHTML = 'No players with 5+ referrals yet.';
+            } else {
+                data.forEach((entry, index) => {
+                    leaderboardDiv.innerHTML += `${index + 1}. User ${entry.userId}: ${entry.coins} coins, ${entry.referrals} referrals<br>`;
                 });
-        }
+            }
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('leaderboard-screen').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error fetching leaderboard:', error);
+            document.getElementById('leaderboard').innerHTML = 'Error loading leaderboard.';
+        });
+}
 
         // Hide Leaderboard
         function hideLeaderboard() {
