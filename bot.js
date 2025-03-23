@@ -3,11 +3,20 @@ const bodyParser = require('body-parser');
 const { Telegraf } = require('telegraf');
 const app = express();
 
-// Bot Token (Replace with your actual bot token from BotFather)
-const bot = new Telegraf('7739570623:AAEmZnADGVkeg2YlNEhJd3OYF0d_0zzp-DY');
+// Check for Telegram Bot Token
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+    console.error('Error: TELEGRAM_BOT_TOKEN environment variable is not set.');
+    process.exit(1);
+}
+const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
 // Middleware
 app.use(bodyParser.json());
+
+// Health Check Endpoint
+app.get('/', (req, res) => {
+    res.status(200).send('Bot is running');
+});
 
 // In-memory database (Replace with MongoDB or similar for production)
 const users = new Map(); // { userId: { username, coins, referrals, joinDate } }
@@ -15,6 +24,9 @@ const users = new Map(); // { userId: { username, coins, referrals, joinDate } }
 // Register User
 app.post('/register', (req, res) => {
     const { userId, username } = req.body;
+    if (!userId) {
+        return res.status(400).send('Missing userId');
+    }
     if (!users.has(userId)) {
         users.set(userId, {
             username: username || 'Anonymous',
@@ -29,6 +41,9 @@ app.post('/register', (req, res) => {
 // Update Coins
 app.post('/update-coins', (req, res) => {
     const { userId, coins } = req.body;
+    if (!userId || coins === undefined) {
+        return res.status(400).send('Missing userId or coins');
+    }
     if (users.has(userId)) {
         const user = users.get(userId);
         user.coins += coins;
