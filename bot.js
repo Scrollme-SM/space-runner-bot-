@@ -1,3 +1,9 @@
+process.on('warning', (warning) => {
+    if (warning.name === 'DeprecationWarning' && warning.message.includes('punycode')) {
+        return;
+    }
+    console.warn(warning);
+});
 const punycode = require('punycode/');
 const express = require('express');
 const bodyParser = require('body-parser');
